@@ -15,7 +15,7 @@ const LogIn = () => {
   const router = useRouter();
 
   const handleLogin = async () => {
-    router.replace("/(tabs)");
+    router.replace("/home");
   };
 
   return (

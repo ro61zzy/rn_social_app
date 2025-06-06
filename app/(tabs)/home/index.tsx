@@ -1,6 +1,9 @@
 import { useGetPostsQuery } from "@/server/api";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useRouter,  Link } from "expo-router";
 import React from "react";
 import {
   FlatList,
@@ -27,32 +30,45 @@ type Post = {
     user_handle: string;
     avatar: string;
   };
+  comments_count: number;
 };
 
 export default function PostsPage() {
+  const router = useRouter();
   const { data, error, isLoading } = useGetPostsQuery();
 
   if (isLoading) return <Text>Loading posts...</Text>;
   if (error) return <Text>Error loading posts</Text>;
 
   const posts = data?.items ?? [];
+  
 
   const renderPost = ({ item: post }: { item: Post }) => (
-    <View style={styles.card}>
+    <TouchableOpacity 
+  onPress={() =>
+  router.push({
+    pathname: "./home/post_details/[id]",
+    params: { id: post.id },
+  })
+}
+
+      activeOpacity={0.9}
+      style={styles.card}
+    >
       <View style={styles.header}>
         <View style={styles.userInfo}>
-        <Image
-  source={{ uri: post.user_details.avatar }}
-  style={styles.avatar}
-/>
+          <Image
+            source={{ uri: post.user_details.avatar }}
+            style={styles.avatar}
+          />
 
           <View>
             <Text style={styles.communityName}>
               {post.community_details.name}
             </Text>
             <Text style={styles.userMeta}>
-              @{post.user_details.user_handle}{" "}
-              · {dayjs(post.created_at).fromNow()}
+              @{post.user_details.user_handle} ·{" "}
+              {dayjs(post.created_at).fromNow()}
             </Text>
           </View>
         </View>
@@ -68,21 +84,46 @@ export default function PostsPage() {
 
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionItem}>
-          <Text style={styles.actionIcon}>👍</Text>
-          <Text style={styles.actionText}>2</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionItem}>
-          <Text style={styles.actionIcon}>👎</Text>
+          <FontAwesome
+            name="thumbs-o-up"
+            size={20}
+            marginRight="4"
+            color="#6b21a8"
+          />
           <Text style={styles.actionText}>0</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionItem}>
-          <Text style={styles.actionIcon}>💬</Text>
-          <Text style={styles.actionText}>1</Text>
+          <FontAwesome
+            name="thumbs-o-down"
+            size={20}
+            marginRight="4"
+            color="#6b21a8"
+          />
+          <Text style={styles.actionText}>0</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+             router.push({
+    pathname: "./home/post_details/[id]",
+    params: { id: post.id },
+  })
+          }}
+          
+          style={styles.actionItem}
+        >
+          <FontAwesome6
+            name="comment"
+            size={20}
+            marginRight="4"
+            color="#6b21a8"
+          />
+          <Text style={styles.actionText}>{post.comments_count}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -105,12 +146,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
-    // Shadows for iOS
+    // iOS
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
-    // Elevation for Android
+    //Android
     elevation: 3,
   },
   header: {
