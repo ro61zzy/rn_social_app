@@ -1,11 +1,17 @@
+// src/screens/PostDetailsScreen.tsx
+import { buildNestedComments } from "@/components/buildNestedComments";
+import CommentListItem from "@/components/CommentListItem";
 import { useGetCommentsByPostIdQuery, useGetPostsQuery } from "@/server/api";
+import { Comment, CommentNode  } from "@/types/types";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { RouteProp, useRoute } from "@react-navigation/native";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import React from "react";
 import {
+  FlatList,
   Image,
   ScrollView,
   StyleSheet,
@@ -16,12 +22,15 @@ import {
 
 dayjs.extend(relativeTime);
 
-type PostDetailsRouteParams = {
-  post_details: { id: string };
+type RootStackParamList = {
+  PostDetailsScreen: { id: string };
+  NestedCommentsScreen: { parentComment: Comment };
 };
 
-export default function PostDetails() {
-  const route = useRoute<RouteProp<PostDetailsRouteParams, "post_details">>();
+type Props = NativeStackScreenProps<RootStackParamList, "PostDetailsScreen">;
+
+export default function PostDetailsScreen({ navigation }: Props) {
+  const route = useRoute<RouteProp<RootStackParamList, "PostDetailsScreen">>();
   const { id } = route.params;
 
 
@@ -31,133 +40,27 @@ export default function PostDetails() {
     error: postsError,
   } = useGetPostsQuery();
 
- 
+  const post = postsData?.items?.find((p: { id: string }) => p.id === id);
+
   const {
     data: comments,
     isLoading: commentsLoading,
     error: commentsError,
   } = useGetCommentsByPostIdQuery(id);
 
+    const nestedComments: CommentNode[] = React.useMemo(() => {
+  if (!comments) return [];
+  return buildNestedComments(comments);
+}, [comments]);
+
   if (postsLoading || commentsLoading) return <Text>Loading...</Text>;
   if (postsError) return <Text>Error loading post.</Text>;
   if (commentsError) return <Text>Error loading comments.</Text>;
 
-  const post = postsData?.items?.find((p) => p.id === id);
-  if (!post) return <Text>Post not found.</Text>;
-
-  console.log("Sample comment:", comments?.[0]);
-
-
-function buildCommentTree(flatComments: any[]) {
-  const map = new Map();
-  const roots: any[] = [];
-
-  const clonedComments = flatComments.map((comment) => ({
-    ...comment,
-    children: [],
-  }));
-
-  clonedComments.forEach((comment) => {
-    map.set(comment.id, comment);
-  });
-
-  clonedComments.forEach((comment) => {
-    if (comment.reply_to && map.has(comment.reply_to)) {
-      map.get(comment.reply_to).children.push(comment);
-    } else {
-      roots.push(comment);
-    }
-  });
-
-  return roots;
-}
-
-
-  function CommentThread({
-    comment,
-    level = 1,
-  }: {
-    comment: any;
-    level?: number;
-  }) {
-    const user = comment.user_details;
-    const avatarUri = user.avatar;
-    const replies = comment.children || [];
-    const showRepliesInline = level < 4;
-
-    return (
-        <View style={{ flexDirection: "row", marginBottom: 1 }}>
- 
-  {level > 0 && (
-    <View
-      style={{
-        width: 12,
-        alignItems: "center",
-      }}
-    >
-      <View
-        style={{
-         flex: 1,
-           width: 1,
-          backgroundColor: "#ccc",
-         // marginTop: 4,
-        }}
-      />
-    </View>
-  )}
-      <View style={{ flex: 1, marginLeft: level > 0 ? 0 : 12 * level }}>
-
-        <View style={styles.commentContainer}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.commentAvatar} />
-          ) : (
-            <View style={styles.commentAvatar}>
-              <Text style={styles.avatarFallbackText}>
-                {user.display_name?.[0]?.toUpperCase() || "U"}
-              </Text>
-            </View>
-          )}
-          <View style={styles.commentContent}>
-            <Text style={styles.userName}>
-              {user.display_name}{" "}
-              <Text style={styles.userHandle}>@{user.user_handle}</Text>
-            </Text>
-            <Text style={styles.contentText}>
-              {comment.content.replace(/<[^>]+>/g, "")}
-            </Text>
-            <Text style={styles.timestamp}>
-              {dayjs(comment.created_at).fromNow()}
-            </Text>
-          </View>
-        </View>
-
-        {showRepliesInline &&
-          replies
-            .slice(0, 3)
-            .map((child: any) => (
-              <CommentThread key={child.id} comment={child} level={level + 1} />
-            ))}
-
-        {showRepliesInline && replies.length > 3 && (
-          <Text style={{ marginLeft: 12, color: "#6b21a8" }}>
-            View more replies ({replies.length - 3})
-          </Text>
-        )}
-
-        {!showRepliesInline && replies.length > 0 && (
-          <TouchableOpacity>
-            <Text style={{ marginLeft: 12, color: "#6b21a8" }}>
-              View {replies.length} reply(ies)
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      </View>
-    );
-  }
+  if (!post) return <Text>Post not found</Text>;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.card}>
         <View style={styles.header}>
           <View style={styles.userInfo}>
@@ -194,7 +97,7 @@ function buildCommentTree(flatComments: any[]) {
             <FontAwesome
               name="thumbs-o-up"
               size={20}
-              marginRight="4"
+              marginRight={4}
               color="#6b21a8"
             />
             <Text style={styles.actionText}>0</Text>
@@ -204,7 +107,7 @@ function buildCommentTree(flatComments: any[]) {
             <FontAwesome
               name="thumbs-o-down"
               size={20}
-              marginRight="4"
+              marginRight={4}
               color="#6b21a8"
             />
             <Text style={styles.actionText}>0</Text>
@@ -214,7 +117,7 @@ function buildCommentTree(flatComments: any[]) {
             <FontAwesome6
               name="comment"
               size={20}
-              marginRight="4"
+              marginRight={4}
               color="#6b21a8"
             />
             <Text style={styles.actionText}>{post.comments_count}</Text>
@@ -222,132 +125,54 @@ function buildCommentTree(flatComments: any[]) {
         </View>
       </View>
 
-      <Text style={styles.commentsHeader}>Comments</Text>
-      {comments?.length === 0 && <Text>No comments yet.</Text>}
-     {comments && buildCommentTree(comments).map((comment) => (
 
-        <CommentThread key={comment.id} comment={comment} />
-      ))}
+       <FlatList
+  data={nestedComments}
+  keyExtractor={(item) => item.id}
+  renderItem={({ item }) => (
+    <CommentListItem
+      comment={item}
+      depth={0}
+      onLoadMoreReplies={(commentId, currentDepth) => {
+        console.log('Load more replies for', commentId, currentDepth);
+      }}
+    />
+  )}
+/>
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    backgroundColor: "#f8f9fa",
-  },
+  container: { flex: 1 },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    // iOS shadow
+    padding: 20,
+    borderRadius: 8,
+    marginBottom: 7,
     shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    // Android
-    elevation: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  userInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  avatarFallbackText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  communityName: {
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  userMeta: {
-    fontSize: 10,
-    color: "#666",
-  },
-  body: {
-    marginTop: 12,
-  },
-  title: {
-    fontWeight: "700",
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  content: {
-    fontSize: 14,
-    color: "#333",
-  },
-  commentsHeader: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  commentContainer: {
-    flexDirection: "row",
-    marginBottom: 12,
-    alignItems: "flex-start",
-  },
-  commentAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  commentContent: {
-    flex: 1,
-  },
-  userName: {
-    fontWeight: "600",
-    fontSize: 14,
-    color: "#222",
-  },
-  userHandle: {
-    fontWeight: "400",
-    color: "#666",
-    fontSize: 12,
-  },
-  contentText: {
-    marginTop: 4,
-    fontSize: 14,
-    color: "#333",
-  },
-  timestamp: {
-    marginTop: 6,
-    fontSize: 12,
-    color: "#999",
-  },
-  actions: {
-    marginTop: 12,
-    flexDirection: "row",
-    gap: 24,
-  },
+  header: { flexDirection: "row", marginBottom: 12 },
+  userInfo: { flexDirection: "row", alignItems: "center" },
+  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
+  avatarFallbackText: { color: "white", fontWeight: "bold", fontSize: 18 },
+  communityName: { fontWeight: "bold", fontSize: 14 },
+  userMeta: { color: "gray", fontSize: 12 },
+  body: {},
+  title: { fontSize: 20, fontWeight: "bold" },
+  content: { fontSize: 16, marginTop: 8 },
+  actions: { flexDirection: "row", marginTop: 12 },
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
+    marginRight: 20,
   },
-  actionIcon: {
-    fontSize: 18,
-    marginRight: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    color: "#555",
-  },
+  actionText: { marginLeft: 4, color: "#6b21a8" },
+  commentsHeader: { fontSize: 18, marginVertical: 12, fontWeight: "600" },
+  viewMore: { color: "#FF4500", marginLeft: 20, marginTop: 8 },
 });

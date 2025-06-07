@@ -1,35 +1,7 @@
 // server/api.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-export type Post = {
-  id: string;
-  title: string;
-  content: string;
-  created_at: number;
-  community_details: {
-    id: string;
-    name: string;
-  };
-  user_details: {
-    display_name: string;
-    user_handle: string;
-    avatar: string;
-  };
-  comments_count: number;
-};
-
-export type Comment = {
-  id: string;
-  post_id: string;
-  user_details: {
-    display_name: string;
-    avatar: string;
-    user_handle: string;
-  };
-  content: string;
-  created_at: number;
-};
+import { Post, Comment, CreateCommentPayload, CreatePostPayload } from "@/types/types";
 
 const BaseUrlML = process.env.EXPO_PUBLIC_BASE_URL;
 
@@ -48,7 +20,9 @@ const baseQuery = fetchBaseQuery({
 export const rnSocialApi = createApi({
   reducerPath: "rnSocialApi",
   baseQuery,
+  tagTypes: ["Post", "Comment"],
   endpoints: (builder) => ({
+
     login: builder.mutation<
       { authToken: string },
       { user_handle: string; password: string }
@@ -60,23 +34,41 @@ export const rnSocialApi = createApi({
       }),
     }),
 
-    getPosts: builder.query<
-      {
-        items: Post[];
-        curPage: number;
-        nextPage: number | null;
-        prevPage: number | null;
-        offset: number;
-        perPage: number;
-        itemsTotal: number;
-      },
-      void
-    >({
+    getUserProfile: builder.query<any, string>({
+      query: (userHandle) =>
+        `/api:zQykoo4c:staging/user/profile?user_handle=${userHandle}`,
+    }),
+
+    getPosts: builder.query<any, void>({
       query: () => "/api:Coq7oZJp:staging/posts",
+      providesTags: ["Post"],
+    }),
+
+    getPostsByCommunityId: builder.query<any, string>({
+      query: (communityId) =>
+        `/api:AAD3_pHV:staging/communities/posts?community_id=${communityId}`,
+    }),
+
+    createPost: builder.mutation<any, CreatePostPayload>({
+      query: (data) => ({
+        url: "/api:Coq7oZJp:staging/posts",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Post"],
+    }),
+
+    deletePost: builder.mutation<any, string>({
+      query: (postId) => ({
+        url: `/api:Coq7oZJp:staging/posts/${postId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Post"],
     }),
 
     getCommentsByPostId: builder.query<Comment[], string>({
       query: (postId) => `/api:HPNnGSlw:staging/comments?post_id=${postId}`,
+      providesTags: ["Comment"],
     }),
 
     getRepliesByCommentId: builder.query<Comment[], string>({
@@ -88,13 +80,35 @@ export const rnSocialApi = createApi({
       query: (commentId) =>
         `/api:HPNnGSlw:staging/comments/${commentId}/deep-replies`,
     }),
+
+    createComment: builder.mutation<any, CreateCommentPayload>({
+      query: (data) => ({
+        url: "/api:HPNnGSlw:staging/comments",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Comment"],
+    }),
+
+    deleteComment: builder.mutation<any, string>({
+      query: (commentId) => ({
+        url: `/api:HPNnGSlw:staging/comments/${commentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Comment"],
+    }),
   }),
 });
-
 export const {
-  useLoginMutation,
+ useLoginMutation,
+  useGetUserProfileQuery,
   useGetPostsQuery,
+  useGetPostsByCommunityIdQuery,
+  useCreatePostMutation,
+  useDeletePostMutation,
   useGetCommentsByPostIdQuery,
   useGetRepliesByCommentIdQuery,
   useGetDeepRepliesByCommentIdQuery,
+  useCreateCommentMutation,
+  useDeleteCommentMutation,
 } = rnSocialApi;
