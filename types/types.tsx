@@ -9,14 +9,16 @@ export type Comment = {
   };
   content: string;
   created_at: number;
-  reply_to?: string | null; // ID of parent comment if it’s a reply
-  child_count?: number; // number of replies if available (optional)
+  reply_to?: string | null; 
+  child_count?: number; 
 };
 
 
 export type CommentNode = Comment & {
   replies: CommentNode[];
 };
+
+
 export type Post = {
   id: string;
   title: string;

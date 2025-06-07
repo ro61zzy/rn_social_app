@@ -1,53 +1,75 @@
-import { View, Text, Modal, KeyboardAvoidingView, TextInput, Button, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { useState } from "react";
+import { Modal, View, TextInput, Button, StyleSheet, Text } from "react-native";
 
-const CommentReply = () => {
+type ReplyInputModalProps = {
+  visible: boolean;
+  onClose: () => void;
+  postId: string;
+  parentId?: string;
+  onSubmit: (content: string) => void;
+};
+
+const ReplyInputModal = ({ visible, onClose, postId, parentId, onSubmit }: ReplyInputModalProps) => {
+  const [content, setContent] = useState("");
+
+  const handleSubmit = () => {
+    if (!content.trim()) return;
+    onSubmit(content);
+    setContent("");
+    onClose();
+  };
+
   return (
-       <Modal
+    <Modal visible={visible} animationType="slide" transparent={true}>
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.title}>Write a reply</Text>
+          <TextInput
+            value={content}
+            onChangeText={setContent}
+            placeholder="Type your reply..."
+            multiline
+            style={styles.textInput}
+          />
+          <View style={styles.buttons}>
+            <Button title="Cancel" onPress={onClose} />
+            <Button title="Reply" onPress={handleSubmit} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
-       
-           animationType="slide"
-           transparent={true}
-
-           
-         >
-         
-         
-            
-         </Modal>
-  )
-}
-
-export default CommentReply
-
-
- const styles = StyleSheet.create({
-  modalContainer: {
+const styles = StyleSheet.create({
+  modalBackdrop: {
     flex: 1,
-    justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
     padding: 20,
   },
-  modalContent: {
+  modalContainer: {
     backgroundColor: "white",
-    borderRadius: 10,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
+    borderRadius: 8,
+    padding: 20,
   },
   textInput: {
+    height: 100,
     borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 6,
-    padding: 8,
-    minHeight: 60,
-    marginBottom: 12,
+    marginVertical: 12,
+    borderRadius: 4,
+    padding: 10,
+    textAlignVertical: "top",
   },
-  modalButtons: {
+  buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
- })
+  title: {
+    fontWeight: "600",
+    fontSize: 18,
+  },
+});
+
+export default ReplyInputModal;

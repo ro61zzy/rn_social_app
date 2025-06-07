@@ -60,73 +60,8 @@ export default function PostDetailsScreen({ navigation }: Props) {
   if (!post) return <Text>Post not found</Text>;
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <View style={styles.userInfo}>
-            {post.user_details.avatar ? (
-              <Image
-                source={{ uri: post.user_details.avatar }}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={[styles.avatar, { backgroundColor: "#888" }]}>
-                <Text style={styles.avatarFallbackText}>
-                  {post.user_details.display_name?.[0]?.toUpperCase() ?? "U"}
-                </Text>
-              </View>
-            )}
-            <View>
-              <Text style={styles.communityName}>
-                {post.community_details.name}
-              </Text>
-              <Text style={styles.userMeta}>
-                @{post.user_details.user_handle} ·{" "}
-                {dayjs(post.created_at).fromNow()}
-              </Text>
-            </View>
-          </View>
-        </View>
 
-        <View style={styles.body}>
-          <Text style={styles.title}>{post.title}</Text>
-          <Text style={styles.content}>{post.content}</Text>
-        </View>
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionItem}>
-            <FontAwesome
-              name="thumbs-o-up"
-              size={20}
-              marginRight={4}
-              color="#6b21a8"
-            />
-            <Text style={styles.actionText}>0</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionItem}>
-            <FontAwesome
-              name="thumbs-o-down"
-              size={20}
-              marginRight={4}
-              color="#6b21a8"
-            />
-            <Text style={styles.actionText}>0</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionItem}>
-            <FontAwesome6
-              name="comment"
-              size={20}
-              marginRight={4}
-              color="#6b21a8"
-            />
-            <Text style={styles.actionText}>{post.comments_count}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-
-       <FlatList
+<FlatList
   data={nestedComments}
   keyExtractor={(item) => item.id}
   renderItem={({ item }) => (
@@ -138,9 +73,73 @@ export default function PostDetailsScreen({ navigation }: Props) {
       }}
     />
   )}
+  ListHeaderComponent={
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <View style={styles.userInfo}>
+          {post.user_details.avatar ? (
+            <Image
+              source={{ uri: post.user_details.avatar }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: "#888" }]}>
+              <Text style={styles.avatarFallbackText}>
+                {post.user_details.display_name?.[0]?.toUpperCase() ?? "U"}
+              </Text>
+            </View>
+          )}
+          <View>
+            <Text style={styles.communityName}>
+              {post.community_details.name}
+            </Text>
+            <Text style={styles.userMeta}>
+              @{post.user_details.user_handle} ·{" "}
+              {dayjs(post.created_at).fromNow()}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.body}>
+        <Text style={styles.title}>{post.title}</Text>
+        <Text style={styles.content}>{post.content}</Text>
+      </View>
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.actionItem}>
+          <FontAwesome
+            name="thumbs-o-up"
+            size={20}
+            marginRight={4}
+            color="#6b21a8"
+          />
+          <Text style={styles.actionText}>0</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionItem}>
+          <FontAwesome
+            name="thumbs-o-down"
+            size={20}
+            marginRight={4}
+            color="#6b21a8"
+          />
+          <Text style={styles.actionText}>0</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.actionItem}>
+          <FontAwesome6
+            name="comment"
+            size={20}
+            marginRight={4}
+            color="#6b21a8"
+          />
+          <Text style={styles.actionText}>{post.comments_count}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  }
 />
 
-    </ScrollView>
   );
 }
 
