@@ -1,3 +1,5 @@
+import { useLoginMutation } from "@/server/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -8,15 +10,29 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useLoginMutation } from "@/server/api";
 
 const LogIn = () => {
   const [userHandle, setUserHandle] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
+  const [login, { isLoading, error }] = useLoginMutation();
+
   const handleLogin = async () => {
-    router.replace("/home");
+    try {
+      const response = await login({
+        user_handle: userHandle,
+        password: password,
+      }).unwrap();
+
+      await AsyncStorage.setItem("accessToken", response.authToken);
+      await AsyncStorage.setItem("userHandle", userHandle);
+
+      router.replace("/home");
+    } catch (err) {
+      console.error("Login failed:", err);
+      alert("Invalid user handle or password.");
+    }
   };
 
   return (
@@ -35,9 +51,18 @@ const LogIn = () => {
           onChangeText={setPassword}
           style={styles.input}
         />
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={{color:"#fff"}}>Log In</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text style={{ color: "#fff" }}>
+            {isLoading ? "Logging in..." : "Log In"}
+          </Text>
         </TouchableOpacity>
+        {error && (
+          <Text style={{ color: "red", marginTop: 10 }}>Login failed.</Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -79,7 +104,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#4b006e",
-    padding:8,
+    padding: 8,
     borderRadius: 8,
   },
 });

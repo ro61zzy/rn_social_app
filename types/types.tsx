@@ -47,3 +47,22 @@ export type CreatePostPayload = {
   content: string;
   community_id: string;
 };
+
+export interface CommunityDetails {
+  id: string;
+  name: string;
+  description: string;
+  logo: {
+    url: string;
+    preview_url: string;
+  };
+  banner: {
+    url: string;
+    preview_url: string;
+  };
+}
+
+export interface UserCommunity {
+  aura: number;
+  community_details: CommunityDetails;
+}
