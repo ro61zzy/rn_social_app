@@ -6,8 +6,11 @@ import { Comment, CommentNode  } from "@/types/types";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { RouteProp, useRoute } from "@react-navigation/native";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import dayjs from "dayjs";
+import { useLayoutEffect } from "react";
+
 import relativeTime from "dayjs/plugin/relativeTime";
 import React from "react";
 import {
@@ -22,17 +25,23 @@ import {
 
 dayjs.extend(relativeTime);
 
-type RootStackParamList = {
-  PostDetailsScreen: { id: string };
-  NestedCommentsScreen: { parentComment: Comment };
+export const options = {
+  title: 'Post Details',
+  headerShown: true,
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, "PostDetailsScreen">;
 
-export default function PostDetailsScreen({ navigation }: Props) {
-  const route = useRoute<RouteProp<RootStackParamList, "PostDetailsScreen">>();
-  const { id } = route.params;
+export default function PostDetailsScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
 
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Post Details", // You can use `id` too if you want dynamic title
+      headerShown: true,
+    });
+  }, [navigation, id]);
 
   const {
     data: postsData,

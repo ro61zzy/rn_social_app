@@ -5,6 +5,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useRouter,  Link } from "expo-router";
 import React from "react";
+import { useLayoutEffect } from "react";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+
 import {
   FlatList,
   Image,
@@ -13,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Tabs } from "expo-router";
 
 dayjs.extend(relativeTime);
 
@@ -35,7 +39,16 @@ type Post = {
 
 export default function PostsPage() {
   const router = useRouter();
+    const navigation = useNavigation();
   const { data, error, isLoading } = useGetPostsQuery();
+
+  useLayoutEffect(() => {
+      navigation.setOptions({
+        title: "Home", // You can use `id` too if you want dynamic title
+        headerShown: true,
+      });
+    }, [navigation]);
+  
 
   if (isLoading) return <Text>Loading posts...</Text>;
   if (error) return <Text>Error loading posts</Text>;
@@ -132,7 +145,16 @@ export default function PostsPage() {
       keyExtractor={(post) => post.id}
       renderItem={renderPost}
       contentContainerStyle={styles.container}
-    />
+    >
+      <Tabs.Screen
+                options={{
+                    title: 'Post Details',
+  headerShown: true,
+                    //   headerLeft: () => <DrawerToggleButton />,
+                }}
+            />
+
+    </FlatList>
   );
 }
 
