@@ -10,6 +10,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useGetUserProfileQuery } from "@/server/api";
 import { UserCommunity } from "@/types/types";
+import { useLayoutEffect } from "react";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 
 
 
@@ -17,7 +19,16 @@ const fallbackAvatar =
   "https://ui-avatars.com/api/?name=User&background=random";
 
 export default function UserPage() {
+      const navigation = useNavigation();
   const [userHandle, setUserHandle] = useState<string | null>(null);
+
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+          title: "Profile", // You can use `id` too if you want dynamic title
+          headerShown: true,
+        });
+      }, [navigation]);
 
   useEffect(() => {
     AsyncStorage.getItem("userHandle").then(setUserHandle);

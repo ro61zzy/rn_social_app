@@ -44,7 +44,7 @@ export default function PostsPage() {
 
   useLayoutEffect(() => {
       navigation.setOptions({
-        title: "Home", // You can use `id` too if you want dynamic title
+        title: "Home", 
         headerShown: true,
       });
     }, [navigation]);
