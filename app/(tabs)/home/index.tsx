@@ -1,12 +1,11 @@
-import { useGetPostsQuery } from "@/server/api";
+import { useGetPostsQuery, useGetPostsByCommunityIdQuery } from "@/server/api";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useRouter,  Link } from "expo-router";
-import React from "react";
-import { useLayoutEffect } from "react";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useLayoutEffect, useState  } from "react";
+import CreatePostModal from "@/components/CreatePostModal";
 
 import {
   FlatList,
@@ -16,55 +15,41 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Tabs } from "expo-router";
+import { Post } from "@/types/types";
 
 dayjs.extend(relativeTime);
 
-type Post = {
-  id: string;
-  title: string;
-  content: string;
-  created_at: number;
-  community_details: {
-    id: string;
-    name: string;
-  };
-  user_details: {
-    display_name: string;
-    user_handle: string;
-    avatar: string;
-  };
-  comments_count: number;
-};
 
 export default function PostsPage() {
   const router = useRouter();
-    const navigation = useNavigation();
-  const { data, error, isLoading } = useGetPostsQuery();
+  const navigation = useNavigation();
+  const [showPostModal, setShowPostModal] = useState(false);
+  const communityId = "118af618-b3ef-403e-8bbd-92af080b973a"; 
+
+  const { data, error, isLoading, refetch } = useGetPostsByCommunityIdQuery(communityId);
+
+ // const { data, error, isLoading, refetch } = useGetPostsQuery();
 
   useLayoutEffect(() => {
-      navigation.setOptions({
-        title: "Home", 
-        headerShown: true,
-      });
-    }, [navigation]);
-  
+    navigation.setOptions({
+      title: "Home",
+      headerShown: true,
+    });
+  }, [navigation]);
 
   if (isLoading) return <Text>Loading posts...</Text>;
   if (error) return <Text>Error loading posts</Text>;
 
   const posts = data?.items ?? [];
-  
 
   const renderPost = ({ item: post }: { item: Post }) => (
-    <TouchableOpacity 
-  onPress={() =>
-  router.push({
-    pathname: "./home/post_details/[id]",
-    params: { id: post.id },
-  })
-}
-
+    <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: "./home/post_details/[id]",
+          params: { id: post.id },
+        })
+      }
       activeOpacity={0.9}
       style={styles.card}
     >
@@ -85,9 +70,9 @@ export default function PostsPage() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.joinButton}>
+        {/* <TouchableOpacity style={styles.joinButton}>
           <Text style={styles.joinButtonText}>Join</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.body}>
@@ -119,12 +104,11 @@ export default function PostsPage() {
         <TouchableOpacity
           onPress={(e) => {
             e.stopPropagation();
-             router.push({
-    pathname: "./home/post_details/[id]",
-    params: { id: post.id },
-  })
+            router.push({
+              pathname: "./home/post_details/[id]",
+              params: { id: post.id },
+            });
           }}
-          
           style={styles.actionItem}
         >
           <FontAwesome6
@@ -140,21 +124,29 @@ export default function PostsPage() {
   );
 
   return (
+    <>
     <FlatList
       data={data?.items ?? []}
       keyExtractor={(post) => post.id}
       renderItem={renderPost}
       contentContainerStyle={styles.container}
-    >
-      <Tabs.Screen
-                options={{
-                    title: 'Post Details',
-  headerShown: true,
-                    //   headerLeft: () => <DrawerToggleButton />,
-                }}
-            />
+    />
+      <TouchableOpacity
+       onPress={() => setShowPostModal(true)}
+        style={styles.fab}
+      >
+        <Text style={styles.fabIcon}>＋</Text>
+      </TouchableOpacity>
 
-    </FlatList>
+<CreatePostModal
+      visible={showPostModal}
+      onClose={() => setShowPostModal(false)}
+      onPostCreated={() => {
+        setShowPostModal(false);
+        refetch(); 
+      }}
+    />
+    </>
   );
 }
 
@@ -239,5 +231,25 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     color: "#555",
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    backgroundColor: "#6b21a8",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  fabIcon: {
+    fontSize: 28,
+    color: "#fff",
+    lineHeight: 28,
   },
 });

@@ -25,7 +25,7 @@ export default function UserPage() {
 
     useLayoutEffect(() => {
         navigation.setOptions({
-          title: "Profile", // You can use `id` too if you want dynamic title
+          title: "Profile", 
           headerShown: true,
         });
       }, [navigation]);

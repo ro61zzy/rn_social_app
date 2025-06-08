@@ -1,22 +1,23 @@
 // src/screens/PostDetailsScreen.tsx
 import { buildNestedComments } from "@/components/buildNestedComments";
 import CommentListItem from "@/components/CommentListItem";
-import { useGetCommentsByPostIdQuery, useGetPostsQuery } from "@/server/api";
-import { Comment, CommentNode  } from "@/types/types";
+import ReplyInputModal from "@/components/CommentReply";
+import {
+  useCreateCommentMutation,
+  useGetCommentsByPostIdQuery,
+  useGetPostsByCommunityIdQuery,
+} from "@/server/api";
+import { CommentNode } from "@/types/types";
+import { Octicons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { RouteProp, useRoute } from "@react-navigation/native";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import dayjs from "dayjs";
-import { useLayoutEffect } from "react";
-
 import relativeTime from "dayjs/plugin/relativeTime";
-import React from "react";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+import React, { useLayoutEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -26,10 +27,9 @@ import {
 dayjs.extend(relativeTime);
 
 export const options = {
-  title: 'Post Details',
+  title: "Post Details",
   headerShown: true,
 };
-
 
 export default function PostDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,18 +38,38 @@ export default function PostDetailsScreen() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: "Post Details", // You can use `id` too if you want dynamic title
+      title: "Post Details",
       headerShown: true,
     });
   }, [navigation, id]);
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [createComment, { isLoading: isCreatingComment }] =
+    useCreateCommentMutation();
+
+  const communityId = "118af618-b3ef-403e-8bbd-92af080b973a";
 
   const {
     data: postsData,
     isLoading: postsLoading,
     error: postsError,
-  } = useGetPostsQuery();
+  } = useGetPostsByCommunityIdQuery(communityId);
 
+  if (postsLoading) {
+    return <Text>Loading posts...</Text>;
+  }
+
+  if (postsError) {
+    return <Text>Error loading posts.</Text>;
+  }
+
+  // compare to fetched posts data by community, no api for post by id
   const post = postsData?.items?.find((p: { id: string }) => p.id === id);
+
+  if (!post) {
+    return <Text>Post not found</Text>;
+  }
+
+  // const post = postsData?.items?.find((p: { id: string }) => p.id === id);
 
   const {
     data: comments,
@@ -57,98 +77,132 @@ export default function PostDetailsScreen() {
     error: commentsError,
   } = useGetCommentsByPostIdQuery(id);
 
-    const nestedComments: CommentNode[] = React.useMemo(() => {
-  if (!comments) return [];
-  return buildNestedComments(comments);
-}, [comments]);
+  const nestedComments: CommentNode[] = React.useMemo(() => {
+    if (!comments) return [];
+    return buildNestedComments(comments);
+  }, [comments]);
 
   if (postsLoading || commentsLoading) return <Text>Loading...</Text>;
   if (postsError) return <Text>Error loading post.</Text>;
   if (commentsError) return <Text>Error loading comments.</Text>;
 
-  if (!post) return <Text>Post not found</Text>;
+  const handlePostReplySubmit = async (content: string) => {
+    try {
+      await createComment({
+        post_id: post.id,
+        content,
+        reply_to: "",
+      }).unwrap();
+
+      setReplyModalVisible(false);
+    } catch (error) {
+      console.error("Failed to create reply to post", error);
+    }
+  };
 
   return (
-
-<FlatList
-  data={nestedComments}
-  keyExtractor={(item) => item.id}
-  renderItem={({ item }) => (
-    <CommentListItem
-      comment={item}
-      depth={0}
-      onLoadMoreReplies={(commentId, currentDepth) => {
-        console.log('Load more replies for', commentId, currentDepth);
-      }}
-    />
-  )}
-  ListHeaderComponent={
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          {post.user_details.avatar ? (
-            <Image
-              source={{ uri: post.user_details.avatar }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={[styles.avatar, { backgroundColor: "#888" }]}>
-              <Text style={styles.avatarFallbackText}>
-                {post.user_details.display_name?.[0]?.toUpperCase() ?? "U"}
-              </Text>
+    <>
+      <FlatList
+        data={nestedComments}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <CommentListItem
+            comment={item}
+            depth={0}
+            onLoadMoreReplies={(commentId, currentDepth) => {
+              console.log("Load more replies for", commentId, currentDepth);
+            }}
+          />
+        )}
+        ListHeaderComponent={
+          <View style={styles.card}>
+            <View style={styles.header}>
+              <View style={styles.userInfo}>
+                {post.user_details.avatar ? (
+                  <Image
+                    source={{ uri: post.user_details.avatar }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={[styles.avatar, { backgroundColor: "#888" }]}>
+                    <Text style={styles.avatarFallbackText}>
+                      {post.user_details.display_name?.[0]?.toUpperCase() ??
+                        "U"}
+                    </Text>
+                  </View>
+                )}
+                <View>
+                  <Text style={styles.communityName}>
+                    {post.community_details.name}
+                  </Text>
+                  <Text style={styles.userMeta}>
+                    @{post.user_details.user_handle} ·{" "}
+                    {dayjs(post.created_at).fromNow()}
+                  </Text>
+                </View>
+              </View>
             </View>
-          )}
-          <View>
-            <Text style={styles.communityName}>
-              {post.community_details.name}
-            </Text>
-            <Text style={styles.userMeta}>
-              @{post.user_details.user_handle} ·{" "}
-              {dayjs(post.created_at).fromNow()}
+
+            <View style={styles.body}>
+              <Text style={styles.title}>{post.title}</Text>
+              <Text style={styles.content}>{post.content}</Text>
+            </View>
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.actionItem}>
+                <FontAwesome
+                  name="thumbs-o-up"
+                  size={20}
+                  marginRight={4}
+                  color="#6b21a8"
+                />
+                <Text style={styles.actionText}>0</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.actionItem}>
+                <FontAwesome
+                  name="thumbs-o-down"
+                  size={20}
+                  marginRight={4}
+                  color="#6b21a8"
+                />
+                <Text style={styles.actionText}>0</Text>
+              </TouchableOpacity>
+
+              {/* <TouchableOpacity style={styles.actionItem}>
+                <FontAwesome6
+                  name="comment"
+                  size={20}
+                  marginRight={4}
+                  color="#6b21a8"
+                />
+                <Text style={styles.actionText}>{post.comments_count}</Text>
+              </TouchableOpacity> */}
+              <TouchableOpacity
+                onPress={() => setReplyModalVisible(true)}
+               style={styles.actionItem}
+              >
+                <Octicons name="reply" size={20} color="#6b21a8" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={{ padding: 20 }}>
+            <Text style={{ color: "#888", fontStyle: "italic" }}>
+              No comments yet. Be the first to comment!
             </Text>
           </View>
-        </View>
-      </View>
-
-      <View style={styles.body}>
-        <Text style={styles.title}>{post.title}</Text>
-        <Text style={styles.content}>{post.content}</Text>
-      </View>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionItem}>
-          <FontAwesome
-            name="thumbs-o-up"
-            size={20}
-            marginRight={4}
-            color="#6b21a8"
-          />
-          <Text style={styles.actionText}>0</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionItem}>
-          <FontAwesome
-            name="thumbs-o-down"
-            size={20}
-            marginRight={4}
-            color="#6b21a8"
-          />
-          <Text style={styles.actionText}>0</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionItem}>
-          <FontAwesome6
-            name="comment"
-            size={20}
-            marginRight={4}
-            color="#6b21a8"
-          />
-          <Text style={styles.actionText}>{post.comments_count}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  }
-/>
-
+        }
+      />
+      <ReplyInputModal
+        visible={replyModalVisible}
+        onClose={() => setReplyModalVisible(false)}
+        postId={post.id}
+        // parentId={null} // top-level comment reply to post
+        onSubmit={handlePostReplySubmit}
+        // isLoading={isCreatingComment}
+      />
+    </>
   );
 }
 

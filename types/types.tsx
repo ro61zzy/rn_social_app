@@ -39,14 +39,25 @@ export type Post = {
 export type CreateCommentPayload = {
   post_id: string;
   content: string;
-  parent_id?: string; 
+  reply_to:string;
 };
 
 export type CreatePostPayload = {
-  title: string;
-  content: string;
   community_id: string;
+  title: string;
+  content?: string;
+  content_type?: "text" | "image" | "video" | "link" | "gif" | "poll" | "video_file";
+  link?: string;
+  mentioned_users?: string[];
+  poll_options?: string[];
+  date_poll_end?: number;
+  reposted_posts_id?: string;
+  video_metadata?: object;
+  gifs?: object[];
+  images?: object[];
+  video_file_url?: object;
 };
+
 
 export interface CommunityDetails {
   id: string;
