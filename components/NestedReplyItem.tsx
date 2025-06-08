@@ -2,10 +2,15 @@
 
 import { CommentNode } from "@/types/types";
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet, FlatList,  Image, } from "react-native";
+import { View, Text, Pressable, StyleSheet, FlatList,  Image, TouchableOpacity, } from "react-native";
 import { Octicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCreateCommentMutation } from "@/server/api";
 import ReplyInputModal from "./CommentReply";
+import { useRouter } from "expo-router";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
 
 type Props = {
   comment: CommentNode;
@@ -17,6 +22,7 @@ const INLINE_REPLIES_LIMIT = 3;
 const MAX_INLINE_DEPTH = 7;
 
 const NestedReplyItem = ({ comment, depth, onReplyCreated }: Props) => {
+    const router = useRouter();
   const [showAllReplies, setShowAllReplies] = useState(false);
   const [createComment, { isLoading }] = useCreateCommentMutation();
     const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -42,6 +48,13 @@ const NestedReplyItem = ({ comment, depth, onReplyCreated }: Props) => {
     }
   };
 
+   const goToRepliesPage = () => {
+  router.push({
+  pathname: "/(tabs)/home/deeper_replies/[id]",
+  params: { id: comment.id },
+});
+};
+
   return (
     <View style={[styles.commentContainer, { marginLeft: depth * 2 }]}>
        <View style={styles.userInfo}>
@@ -59,21 +72,31 @@ const NestedReplyItem = ({ comment, depth, onReplyCreated }: Props) => {
               )}
               <Text style={styles.username}>{comment.user_details.display_name}</Text>
               <Text style={styles.dot}>&#x2022;</Text>
+               <Text style={styles.userMeta}>
+                            {dayjs(comment.created_at).fromNow()}
+                          </Text>
             </View>
       <Text style={styles.content}>{comment.content}</Text>
 
       <View style={styles.actions}>
-        <Octicons name="reply" size={16} color="#737373"  onPress={() => setReplyModalVisible(true)} />
+        <TouchableOpacity
+  onPress={() => setReplyModalVisible(true)}
+  style={{ padding: 6, borderRadius: 4 }} 
+  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} 
+>
+  <Octicons name="reply" size={16}  color="#6b21a8" />
+</TouchableOpacity>
+
         <View style={styles.voteButtons}>
           <MaterialCommunityIcons
             name="arrow-up-bold-outline"
             size={18}
-            color="#737373"
+             color="#6b21a8"
           />
           <MaterialCommunityIcons
             name="arrow-down-bold-outline"
             size={18}
-            color="#737373"
+             color="#6b21a8"
           />
         </View>
       </View>
@@ -109,9 +132,9 @@ const NestedReplyItem = ({ comment, depth, onReplyCreated }: Props) => {
       )}
 
       {!showRepliesInline && (comment.child_count ?? 0) > 0 && (
-        <Pressable style={styles.viewMoreReplies}>
-          <Text style={styles.viewMoreText}>View More Replies</Text>
-        </Pressable>
+        <Pressable onPress={goToRepliesPage} style={styles.viewMoreReplies}>
+           <Text style={styles.viewMoreText}>More Replies ⌄</Text>
+         </Pressable>
       )}
     </View>
   );
@@ -130,7 +153,7 @@ const styles = StyleSheet.create({
   avatarFallbackText: { color: "white", fontWeight: "bold", fontSize: 18 },
   userInfo: { flexDirection: "row", alignItems: "center", gap: 3 },
   username: { fontWeight: "600", color: "#737373", fontSize: 13 },
-  dot: { color: "#737373", fontSize: 13 },
+  dot: { color:  "#6b21a8", fontSize: 13 },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -155,7 +178,7 @@ const styles = StyleSheet.create({
     color: "#545454",
   },
   viewMoreReplies: {
-    backgroundColor: "#D1EAFE",
+  
     borderRadius: 3,
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -165,8 +188,9 @@ const styles = StyleSheet.create({
   viewMoreText: {
     fontWeight: "600",
     color: "#0B76FF",
-    fontSize: 13,
+    fontSize: 12,
   },
+   userMeta: { color: "gray", fontSize: 10 },
 });
 
 export default NestedReplyItem;

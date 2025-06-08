@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "version": ">= 16.9.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+       "env": {
+        "EXPO_PUBLIC_BASE_URL": "https://xsrr-l2ye-dpbj.f2.xano.io"
+        }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

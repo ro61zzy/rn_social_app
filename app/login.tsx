@@ -40,12 +40,14 @@ const LogIn = () => {
       <View style={styles.box}>
         <TextInput
           placeholder="User @"
+          placeholderTextColor="#999797"
           value={userHandle}
           onChangeText={setUserHandle}
           style={styles.input}
         />
         <TextInput
           placeholder="Password"
+          placeholderTextColor="#999797"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -99,6 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     backgroundColor: "#fff",
+    color: "#000",
   },
   button: {
     justifyContent: "center",

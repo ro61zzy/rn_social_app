@@ -192,7 +192,7 @@ export default function PostDetailsScreen() {
         ListEmptyComponent={
           <View style={{ padding: 20 }}>
             <Text style={{ color: "#888", fontStyle: "italic" }}>
-              No comments yet. Be the first to comment!
+              No comments yet. Be the first to comment! 👆
             </Text>
           </View>
         }
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 8,
-    marginBottom: 7,
+    // marginBottom: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

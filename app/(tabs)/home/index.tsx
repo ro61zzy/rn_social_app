@@ -6,7 +6,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useLayoutEffect, useState  } from "react";
 import CreatePostModal from "@/components/CreatePostModal";
-
 import {
   FlatList,
   Image,
@@ -14,6 +13,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { Post } from "@/types/types";
 
@@ -37,7 +37,13 @@ export default function PostsPage() {
     });
   }, [navigation]);
 
-  if (isLoading) return <Text>Loading posts...</Text>;
+  if (isLoading) {
+      return (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#4b006e" />
+        </View>
+      );
+    }
   if (error) return <Text>Error loading posts</Text>;
 
   const posts = data?.items ?? [];
@@ -151,15 +157,16 @@ export default function PostsPage() {
 }
 
 const styles = StyleSheet.create({
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
   container: {
-    padding: 16,
+    padding: 14,
     backgroundColor: "#f8f9fa",
   },
   card: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 6,
     // iOS
     shadowColor: "#000",
     shadowOpacity: 0.1,

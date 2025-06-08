@@ -7,7 +7,19 @@ import { store } from "../../server/store";
 export default function TabsLayout() {
   return (
     <Provider store={store}>
-      <Tabs>
+      <Tabs
+        screenOptions={{
+    tabBarStyle: {
+      height: 65,           
+      paddingBottom: 5,    
+      paddingTop: 5,
+    },
+    tabBarLabelStyle: {
+      fontSize: 12,         
+    },
+  }}
+
+      >
         <Tabs.Screen
           name="home"
           options={{

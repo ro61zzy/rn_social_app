@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "social_app",
+    "name": "Social App",
     "slug": "social_app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.ro61zzy.social_app"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2db6ba22-c983-4483-b875-ab2cfd3bf64c"
+      }
     }
   }
 }

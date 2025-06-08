@@ -1,8 +1,15 @@
-import React, { useState } from "react";
-import { Modal, View, TextInput, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useCreatePostMutation } from "@/server/api";
+import React, { useState } from "react";
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const DEFAULT_COMMUNITY_ID = "118af618-b3ef-403e-8bbd-92af080b973a"
+const DEFAULT_COMMUNITY_ID = "118af618-b3ef-403e-8bbd-92af080b973a";
 
 export default function CreatePostModal({
   visible,
@@ -30,7 +37,7 @@ export default function CreatePostModal({
       setTitle("");
       setContent("");
       onClose();
-      onPostCreated(); 
+      onPostCreated();
     } catch (error) {
       console.error("Error creating post", error);
     }
@@ -43,12 +50,14 @@ export default function CreatePostModal({
 
         <TextInput
           placeholder="Title"
+          placeholderTextColor="#999797"
           value={title}
           onChangeText={setTitle}
           style={styles.input}
         />
         <TextInput
           placeholder="Content"
+          placeholderTextColor="#999797"
           value={content}
           onChangeText={setContent}
           style={[styles.input, { height: 100 }]}
