@@ -42,6 +42,8 @@ export default function PostDetailsScreen() {
       headerShown: true,
     });
   }, [navigation, id]);
+
+
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [createComment, { isLoading: isCreatingComment }] =
     useCreateCommentMutation();
@@ -75,6 +77,7 @@ export default function PostDetailsScreen() {
     data: comments,
     isLoading: commentsLoading,
     error: commentsError,
+   refetch
   } = useGetCommentsByPostIdQuery(id);
 
   const nestedComments: CommentNode[] = React.useMemo(() => {

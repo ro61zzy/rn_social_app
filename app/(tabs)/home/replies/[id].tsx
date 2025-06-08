@@ -1,65 +1,40 @@
-import CommentListItem from "@/components/CommentListItem";
-import { useGetRepliesByCommentIdQuery } from "@/server/api"; // your fetch function
-import type { Comment, CommentNode } from "@/types/types";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
-import React from "react";
-import { FlatList } from "react-native";
-import { useRouter,  Link } from "expo-router";
+import React, { useLayoutEffect, useMemo } from "react";
+import { FlatList, Text } from "react-native";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useGetRepliesByCommentIdQuery } from "@/server/api";
+import { buildNestedComments } from "@/components/buildNestedComments";
+import NestedReplyItem from "@/components/NestedReplyItem";
 
-type RootStackParamList = {
-  RepliesPage: { id: string };
-  NestedCommentsScreen: { parentComment: Comment };
-};
+const RepliesScreen = () => {
+  const { id } = useLocalSearchParams();
+  const commentId = id as string;
+  const navigation = useNavigation();
 
-const RepliesPage = () => {
-  const route = useRoute<RouteProp<RootStackParamList, "RepliesPage">>();
-  const router = useRouter();
+const { data: replies, isLoading, refetch } = useGetRepliesByCommentIdQuery(commentId);
 
-  const { id } = route.params;
 
-  const {
-    data: replies,
-    isLoading: repliesLoading,
-    error: repliesError,
-  } = useGetRepliesByCommentIdQuery(id);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Replies",
+      headerShown: true,
+    });
+  }, [navigation, id]);
 
-const handleLoadMoreReplies = (commentId: string, currentDepth: number) => {
-    if (currentDepth === 4) {
-      router.push(`./replies/${commentId}`);
-    } else if (currentDepth === 8) {
-      router.push(`./deep-replies/${commentId}`);
-    }
-  };
+  const nestedReplies = useMemo(() => {
+    if (!replies) return [];
+    return buildNestedComments(replies);
+  }, [replies]);
 
-  if (repliesLoading) {
-    return null; 
-  }
-
-  if (repliesError) {
-    return null; 
-  }
+  if (isLoading) return <Text>Loading replies...</Text>;
+  if (!replies || replies.length === 0) return <Text>No replies found.</Text>;
 
   return (
-   <FlatList
-  data={replies}
-  keyExtractor={(item) => item.id}
-  renderItem={({ item }) => {
-    const commentNode: CommentNode = {
-      ...item,
-      replies: [], 
-    };
-
-    return (
-      <CommentListItem
-        comment={commentNode}
-        depth={5}
-        onLoadMoreReplies={() => handleLoadMoreReplies(item.id, 5)}
-      />
-    );
-  }}
-/>
-
+    <FlatList
+      data={nestedReplies}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <NestedReplyItem comment={item} depth={5} onReplyCreated={refetch} />}
+    />
   );
 };
 
-export default RepliesPage;
+export default RepliesScreen;

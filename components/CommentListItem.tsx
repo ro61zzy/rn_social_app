@@ -17,12 +17,14 @@ type CommentListItemProps = {
   comment: CommentNode;
   depth: number;
   onLoadMoreReplies: (commentId: string, currentDepth: number) => void;
+  maxInlineDepth?: number; // 👈 Add this
 };
 
 const CommentListItem = ({
   comment,
   depth,
   onLoadMoreReplies,
+  maxInlineDepth
 }: CommentListItemProps) => {
   const [showReplies, setShowReplies] = useState(false);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -30,7 +32,9 @@ const CommentListItem = ({
   const router = useRouter();
 
   const INLINE_REPLIES_LIMIT = 3;
-  const canShowRepliesInline = depth < 4;
+const inlineDepthLimit = maxInlineDepth ?? 3; 
+const canShowRepliesInline = depth < inlineDepthLimit;
+
   const repliesToShow = showReplies
     ? comment.replies
     : comment.replies.slice(0, INLINE_REPLIES_LIMIT);
@@ -48,9 +52,13 @@ const CommentListItem = ({
     }
   };
 
-  const goToRepliesPage = () => {
-    onLoadMoreReplies(comment.id, depth);
-  };
+ const goToRepliesPage = () => {
+  router.push({
+  pathname: "/(tabs)/home/replies/[id]",
+  params: { id: comment.id },
+});
+
+};
 
   return (
     <View style={[styles.commentContainer, { marginLeft: depth * 10 }]}>
@@ -130,11 +138,14 @@ const CommentListItem = ({
         </>
       )}
 
-      {!canShowRepliesInline && comment.child_count && (
-        <Pressable onPress={goToRepliesPage} style={styles.viewMoreReplies}>
-          <Text style={styles.viewMoreText}>View More Replies</Text>
-        </Pressable>
-      )}
+  {!canShowRepliesInline && (comment.child_count ?? 0) > 0 && (
+  <Pressable onPress={goToRepliesPage} style={styles.viewMoreReplies}>
+    <Text style={styles.viewMoreText}>View More Replies</Text>
+  </Pressable>
+)}
+
+
+
     </View>
   );
 };
